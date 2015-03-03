@@ -21,7 +21,11 @@
 
 package org.xbmc.android.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.zip.GZIPInputStream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -132,6 +136,51 @@ public abstract class HostFactory {
 			host.mac_addr = json.getString("mac_addr");
 			host.wol_wait = json.getInt("wol_wait");
 			host.wol_port = json.getInt("wol_port");
+			return host;
+		}
+		catch (JSONException e) {
+			Log.e(TAG, "Error in parseJson", e);
+			return null;
+		}
+	}
+	
+	/**
+	 * Uncompressed a Host object from byte array. Add default values
+	 * @param b a byte array
+	 * @return a Host object that represents str, or null if an error occurred
+	 */
+	public static Host getHostFromCompressedLightJson(byte[] b) {
+		String str = null;
+		ByteArrayInputStream bais = new ByteArrayInputStream(b);
+		try {
+			GZIPInputStream gis = new GZIPInputStream(bais);
+			ObjectInputStream ois = new ObjectInputStream(gis);
+			str = (String) ois.readObject();
+			ois.close();
+			gis.close();
+		} catch (IOException e) {
+			Log.e(TAG, "Error in parseJson", e);
+			return null;
+		} catch (ClassNotFoundException e) {
+			Log.e(TAG, "Error in parseJson", e);
+			return null;
+		}
+		
+		try {
+			JSONObject json = (JSONObject) new JSONTokener(str).nextValue();
+			Host host = new Host();
+			host.name = json.getString("n");
+			host.addr = json.getString("a");
+			host.port = json.getInt("p");
+			host.user = json.getString("u");
+			host.pass = json.getString("pa");
+			host.esPort = Host.DEFAULT_EVENTSERVER_PORT;
+			host.timeout = Host.DEFAULT_TIMEOUT;
+			host.wifi_only = json.getBoolean("w");
+			host.access_point = json.getString("ac");
+			host.mac_addr = json.getString("m");
+			host.wol_wait = Host.DEFAULT_WOL_WAIT;
+			host.wol_port = Host.DEFAULT_WOL_PORT;
 			return host;
 		}
 		catch (JSONException e) {

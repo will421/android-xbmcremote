@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:key="XBMCRemotePrefsFile">
 	<PreferenceCategory android:title="General">
+	    <SwitchPreference
+	        android:key="setting_nfc"
+	        android:title="NFC Settings"
+	        android:summary="Write NFC and edit follow me settings">
+	        <intent 
+				android:action="android.intent.action.MAIN" 
+				android:targetPackage="org.xbmc.android.remote" 
+				android:targetClass="org.xbmc.android.remote.presentation.activity.HostSettingsActivity" 
+				android:data="" /> 
+	    </SwitchPreference>  
 		<PreferenceScreen
 			android:key="setting_instances"
 			android:title="Manage XBMC Hosts"

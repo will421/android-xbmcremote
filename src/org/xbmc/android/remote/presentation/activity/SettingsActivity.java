@@ -28,10 +28,14 @@ import org.xbmc.api.business.IEventClientManager;
 import org.xbmc.api.type.ThumbSize;
 import org.xbmc.eventclient.ButtonCodes;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.Preference;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.preference.SwitchPreference;
 import android.view.Display;
 import android.view.KeyEvent;
 
@@ -58,7 +62,15 @@ public class SettingsActivity extends PreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-
+		SwitchPreference sp =  (SwitchPreference) findPreference("setting_nfc");
+		sp.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			
+			public boolean onPreferenceClick(Preference preference) {
+				SwitchPreference sp =(SwitchPreference)preference;
+				sp.setChecked(!sp.isChecked());
+				return false;
+			}
+		});
 		// set display size
 		final Display display = getWindowManager().getDefaultDisplay(); 
 		ThumbSize.setScreenSize(display.getWidth(), display.getHeight());	
@@ -107,4 +119,7 @@ public class SettingsActivity extends PreferenceActivity {
 		client.setController(null);
 		return super.onKeyDown(keyCode, event);
 	}
+	
+
+	
 }

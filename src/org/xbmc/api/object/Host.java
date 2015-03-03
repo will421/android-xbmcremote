@@ -21,7 +21,11 @@
 
 package org.xbmc.api.object;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.zip.GZIPOutputStream;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -126,6 +130,51 @@ public class Host implements Serializable {
 			Log.e(TAG, "Error in toJson", e);
 			return "";
 		}
+	}
+	/**
+	 * For NFC purpose
+	 * 
+	 */
+	public String toLightJson()
+	{
+		try {
+			JSONObject json = new JSONObject();
+			json.put("n", name);
+			json.put("a", addr);
+			json.put("p", port);
+			json.put("u", user);
+			json.put("pa", pass);
+			json.put("w", wifi_only);
+			json.put("ac", access_point);
+			json.put("m", mac_addr);
+			return json.toString();
+		} catch (JSONException e) {
+			Log.e(TAG, "Error in toJson", e);
+			return "";
+		}
+	}
+	
+
+	/**
+	 * For NFC purpose
+	 */
+	public byte[] toCompressedLightJson()
+	{
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		GZIPOutputStream gz;
+		ObjectOutputStream oos = null; 
+			try {
+				gz = new GZIPOutputStream(baos);
+				oos = new ObjectOutputStream(gz);
+				oos.writeObject(this.toLightJson());
+				oos.flush();
+				byte[] res = baos.toByteArray();
+				return res;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		return null;
 	}
 	
 	private static final long serialVersionUID = 7886482294339161092L;
