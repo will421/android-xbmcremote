@@ -81,7 +81,7 @@ public class NowPlayingController extends AbstractController implements INotifia
 		switch (msg.what) {
 			case NowPlayingPollerThread.MESSAGE_PROGRESS_CHANGED: 
 				mPlayStatus = currentlyPlaying.getPlayStatus();
-				mNowPlayingActivity.setProgressPosition(Math.round(currentlyPlaying.getPercentage()));
+				mNowPlayingActivity.setProgressPosition((int)Math.round(currentlyPlaying.getPercentage()));
 				if (mPlayStatus == PlayStatus.PAUSED || mPlayStatus == PlayStatus.PLAYING) {
 					mNowPlayingActivity.updateProgress(currentlyPlaying.getDuration(), currentlyPlaying.getTime(), (mPlayStatus == PlayStatus.PAUSED));
 				} else {

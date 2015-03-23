@@ -107,10 +107,10 @@ public interface IControlClient extends IClient {
 	 * </ul> 
 	 * @param manager Manager reference
 	 * @param type     Seek type, relative or absolute
-	 * @param progress Progress
+	 * @param p Progress
 	 * @return true on success, false otherwise.
 	 */
-	public boolean seek(INotifiableManager manager, SeekType type, int progress);
+	public boolean seek(INotifiableManager manager, SeekType type, double p);
 	
 	/**
 	 * Send the string <code>text</code> via keys on the virtual keyboard.
@@ -305,7 +305,7 @@ public interface IControlClient extends IClient {
 		
 		public int getTime();
 		public int getDuration();
-		public float getPercentage();
+		public double getPercentage();
 		
 		public String getArtist();
 		public String getAlbum();

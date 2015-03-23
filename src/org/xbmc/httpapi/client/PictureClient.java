@@ -62,7 +62,7 @@ public class PictureClient {
 				return map.get("Filename");
 			}
 
-			public float getPercentage() {
+			public double getPercentage() {
 				// TODO Auto-generated method stub
 				return 0;
 			}

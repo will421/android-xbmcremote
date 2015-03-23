@@ -40,14 +40,10 @@ public class FollowMeActivity extends Activity{
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.followme);
-		
 		Button writeButton = (Button) findViewById(R.id.buttonWriteNfc);
 		writeButton.setOnTouchListener(new OnTouchListener() {
-			
 			public boolean onTouch(View v, MotionEvent event) {
 				writing = true;
 				return false;
@@ -70,8 +66,7 @@ public class FollowMeActivity extends Activity{
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mNfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
-		
+		mNfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);		
 	}
 	
 	public void onPause() {
@@ -92,9 +87,6 @@ public class FollowMeActivity extends Activity{
 				NFCHelper.writeTag(this, tag, nfcMessage);
 				Toast.makeText(this, "Writed", Toast.LENGTH_SHORT).show();
 				writing = false;
-			}
-			else {
-				
 			}
 		}
 		super.onNewIntent(intent);

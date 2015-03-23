@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:key="XBMCRemotePrefsFile">
-	<PreferenceCategory android:title="General">
-	    <SwitchPreference
-	        android:key="setting_nfc"
-	        android:title="NFC Settings"
-	        android:summary="Write NFC and edit follow me settings">
-	        <intent 
-				android:action="android.intent.action.MAIN" 
-				android:targetPackage="org.xbmc.android.remote" 
-				android:targetClass="org.xbmc.android.remote.presentation.activity.HostSettingsActivity" 
-				android:data="" /> 
-	    </SwitchPreference>  
+	<PreferenceCategory android:title="General"> 
 		<PreferenceScreen
 			android:key="setting_instances"
 			android:title="Manage XBMC Hosts"
@@ -94,6 +84,16 @@
 			android:defaultValue="0" />
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Miscellaneous options">
+	   	<SwitchPreference
+	        android:key="setting_follow_me"
+	        android:title="Follow me"
+	        android:summary="Write NFC and edit follow me settings">
+	        <intent 
+				android:action="android.intent.action.MAIN" 
+				android:targetPackage="org.xbmc.android.remote" 
+				android:targetClass="org.xbmc.android.remote.presentation.activity.FollowMeActivity" 
+				android:data="" /> 
+	    </SwitchPreference> 
 		<CheckBoxPreference
 			android:key="setting_remember_last_tab"
 			android:title="Remember selected tab"

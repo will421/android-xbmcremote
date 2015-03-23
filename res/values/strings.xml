@@ -50,4 +50,8 @@ Have fun.</string>
 	<string name="Write_NFC">Write one tag</string>
 	<string name="Do_you_want_to_add_this_host">Do you want to add this host ?</string>
 	<string name="tag_nfc">Tag NFC</string>
+	<string name="prefId_save_playing_file_name">prefId_save_playing_file_name</string>
+	<string name="prefId_save_playing_seek">prefId_save_playing_seek</string>
+	<string name="add">Add</string>
+	<string name="ignore">Ignore</string>
 </resources>

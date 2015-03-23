@@ -186,7 +186,7 @@ public class ControlClient extends Client implements IControlClient {
 	 * @param progress Progress
 	 * @return true on success, false otherwise.
 	 */
-	public boolean seek(INotifiableManager manager, SeekType type, int progress) {
+	public boolean seek(INotifiableManager manager, SeekType type, double progress) {
 		if (type.compareTo(SeekType.absolute) == 0)
 			return mConnection.getJson(manager, "Player.Seek", obj().p("playerid", getActivePlayerId(manager)).p("value", progress)).get("percentage")!=null;
 		else
@@ -429,7 +429,7 @@ public class ControlClient extends Client implements IControlClient {
 			public String getTitle() { return ""; }
 			public int getTime() { return 0; }
 			public int getPlayStatus() { return PlayStatus.STOPPED; }
-			public float getPercentage() { return 0; }
+			public double getPercentage() { return 0; }
 			public String getFilename() { return ""; }
 			public int getDuration() { return 0; }
 			public String getArtist() { return ""; }

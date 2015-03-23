@@ -359,11 +359,8 @@ public class TvShowClient extends Client implements ITvShowClient {
 				return getInt(player, "position");
 			}
 			//Workarond for bug in Float.valueOf(): http://code.google.com/p/android/issues/detail?id=3156
-			public float getPercentage() {
-				try{
-					return getInt(player, "percentage");
-				} catch (NumberFormatException e) { }
-				return (float)getDouble(player, "percentage");
+			public double getPercentage() {
+				return getDouble(player, "percentage");
 			}
 			public String getFilename() {
 				return getString(item, "file");

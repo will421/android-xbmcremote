@@ -62,7 +62,7 @@ public class SettingsActivity extends PreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-		SwitchPreference sp =  (SwitchPreference) findPreference("setting_nfc");
+		SwitchPreference sp =  (SwitchPreference) findPreference("setting_follow_me");
 		sp.setOnPreferenceClickListener(new OnPreferenceClickListener() {
 			
 			public boolean onPreferenceClick(Preference preference) {

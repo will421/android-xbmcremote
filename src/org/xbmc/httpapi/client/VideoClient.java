@@ -468,11 +468,11 @@ public class VideoClient extends Client implements IVideoClient {
 				return Integer.parseInt(map.get("VideoNo"));
 			}
 			//Workarond for bug in Float.valueOf(): http://code.google.com/p/android/issues/detail?id=3156
-			public float getPercentage() {
+			public double getPercentage() {
 				try{
 					return Integer.valueOf(map.get("Percentage"));
 				} catch (NumberFormatException e) { }
-				return Float.valueOf(map.get("Percentage"));
+				return Double.valueOf(map.get("Percentage"));
 			}
 			public String getFilename() {
 				return map.get("Filename");

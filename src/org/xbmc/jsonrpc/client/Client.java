@@ -247,6 +247,11 @@ public abstract class Client {
 			super.put(fieldName, v);
 			return this;
 		}
+		
+		public ObjNode p(String fieldName, double v) {
+			super.put(fieldName, v);
+			return this;
+		}
 	};
 
 	public final static ArrayNode arr() {
@@ -282,11 +287,12 @@ public abstract class Client {
 		if(obj.get(key) == null)
 			return -1;
 		
-		DecimalFormat twoDForm = new DecimalFormat("#.0");
+		//DecimalFormat twoDForm = new DecimalFormat("#.0");
 		
 		double val = -1;
 		try{
-			val = Double.valueOf(twoDForm.format(obj.get(key).getDoubleValue()).replace(',', '.'));
+			//val = Double.valueOf(twoDForm.format(obj.get(key).getDoubleValue()).replace(',', '.'));
+			val = Double.valueOf(obj.get(key).getDoubleValue());
 		}
 		catch(NumberFormatException e){
 			val = -1;
