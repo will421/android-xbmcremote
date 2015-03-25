@@ -1,6 +1,12 @@
 package org.xbmc.android.remote.presentation.activity;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import org.xbmc.android.remote.R;
 import org.xbmc.android.remote.business.Command;
@@ -31,6 +37,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.util.TimeUtils;
 import android.util.Log;
 import android.webkit.URLUtil;
 import android.widget.Toast;
@@ -50,7 +57,8 @@ public class NFCIntentActivity extends Activity {
 
 	private String TAG = this.getClass().getSimpleName();
 
-	private boolean dialogFinish;
+	
+	int mId = 5 ;
 	private ICurrentlyPlaying playing;
 	private ICurrentlyPlaying playingOther;
 	private IControlClient cc;
@@ -112,20 +120,20 @@ public class NFCIntentActivity extends Activity {
 		dialog.show();
 	}
 
-	private int initState(Host host){
+	private int initState(Host host,SharedPreferences pref){
 		int state = 0;
-		
+
 		if(HostFactory.host ==null){ //Workaround for when remote not connected
 			HostFactory.host = host;
 			ClientFactory.resetClient(host);
 		}
-		
-		
+
+
 		if(! host.toLightJson().equals(HostFactory.host.toLightJson()))
 			state += HOST_STATE_DIFF;
 
 		playing = cc.getCurrentlyPlaying(new MyNotifiable());
-		if((state & HOST_STATE_DIFF) == 1){
+		if((state & HOST_STATE_DIFF) != 0){
 			Host hostSave = HostFactory.host;
 			ClientFactory.resetClient(host);
 			playingOther = cc.getCurrentlyPlaying(new MyNotifiable());
@@ -139,29 +147,46 @@ public class NFCIntentActivity extends Activity {
 			state+= HOST_STATE_OTHER_NOTPLAYING;
 
 		//Check kinect
-		//if(! kinect)
-		state+= NOBODY_ON_KINECT;
+		if(playingOther == null || !checkKinect())
+			state+= NOBODY_ON_KINECT;
 
 		//Check notification
-		//if(!someting)
-		state+= NOTHING_ON_REMOTE;
+		String filepath =pref.getString(getString(R.string.prefId_save_playing_file_name), null);
+		if(filepath ==null)
+			state+= NOTHING_ON_REMOTE;
 
 		return state;
 	}
 
-	private void genNotification(SharedPreferences pref){
+	private void saveFile(SharedPreferences pref){
 		SharedPreferences.Editor editor = pref.edit();
 		editor.putString(getString(R.string.prefId_save_playing_file_name), playing.getFilename());
 		editor.putFloat(getString(R.string.prefId_save_playing_seek),(float) playing.getPercentage());
 		editor.commit();
+
 		
+		cc.stop(new MyNotifiable());
+		
+		int seconds1 = playing.getTime();
+		int seconds2 = playing.getDuration();
+		String time = String.format("%02d:%02d:%02d/%02d:%02d:%02d", 
+				TimeUnit.SECONDS.toHours(seconds1),
+				TimeUnit.SECONDS.toMinutes(seconds1) -  
+				TimeUnit.HOURS.toMinutes(TimeUnit.SECONDS.toHours(seconds1)), // The change is in this line
+				TimeUnit.SECONDS.toSeconds(seconds1) - 
+				TimeUnit.MINUTES.toSeconds(TimeUnit.SECONDS.toMinutes(seconds1)),
+				TimeUnit.SECONDS.toHours(seconds2),
+				TimeUnit.SECONDS.toMinutes(seconds2) -  
+				TimeUnit.HOURS.toMinutes(TimeUnit.SECONDS.toHours(seconds2)), // The change is in this line
+				TimeUnit.SECONDS.toSeconds(seconds2) - 
+				TimeUnit.MINUTES.toSeconds(TimeUnit.SECONDS.toMinutes(seconds2))); 
+
 		NotificationCompat.Builder mBuilder =
-		        new NotificationCompat.Builder(this)
-		        .setSmallIcon(R.drawable.icon)
-		        .setContentTitle(URLUtil.guessFileName(playing.getFilename(),null,null))
-		        .setContentText(Double.toString(playing.getPercentage())+"%");
-					
-		        //.setContentText(Double.toHexString(playing.getPercentage()));
+				new NotificationCompat.Builder(this)
+		.setSmallIcon(R.drawable.icon)
+		.setContentTitle(URLUtil.guessFileName(playing.getFilename(),null,null))
+		.setContentText(time);
+
 		// Creates an explicit intent for an Activity in your app
 		Intent resultIntent = new Intent(this, HomeActivity.class);
 
@@ -175,19 +200,36 @@ public class NFCIntentActivity extends Activity {
 		// Adds the Intent that starts the Activity to the top of the stack
 		stackBuilder.addNextIntent(resultIntent);
 		PendingIntent resultPendingIntent =
-		        stackBuilder.getPendingIntent(
-		            0,
-		            PendingIntent.FLAG_UPDATE_CURRENT
-		        );
+				stackBuilder.getPendingIntent(
+						0,
+						PendingIntent.FLAG_UPDATE_CURRENT
+						);
 		mBuilder.setContentIntent(resultPendingIntent);
 		NotificationManager mNotificationManager =
-		    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		// mId allows you to update the notification later on.
-		int mId = 5 ;
+		
 		mNotificationManager.notify(mId, mBuilder.build());
 	}
 	
-	
+	private void applySavedFile(SharedPreferences sharedPref,Host host){
+		String filepath = sharedPref.getString(getString(R.string.prefId_save_playing_file_name), null);
+		if(filepath==null) return;
+		Float p = sharedPref.getFloat(getString(R.string.prefId_save_playing_seek), 0);
+		
+		
+		ClientFactory.resetClient(host);
+		cc.playFile(new MyNotifiable(), filepath, 1);
+		cc.seek(new MyNotifiable(), SeekType.absolute, p);
+
+		NotificationManager mNotificationManager =
+				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.cancel(mId);
+		
+		cleanSavedFile(this);
+	}
+
+
 	private void exec(Host host){
 		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 		if(! pref.getBoolean("setting_follow_me", false)){
@@ -201,35 +243,132 @@ public class NFCIntentActivity extends Activity {
 			e1.printStackTrace();
 		}
 
-		int state = initState(host);
+		int state = initState(host,pref);
 
 		Log.d(this.getClass().getSimpleName(), "state :"+state);
-		if(state==23){
-			//Stop this from playing //See jsonrpc-ControlClient @120
-			String f =  playing.getFilename();
 
-			double p = playing.getPercentage();
-			boolean isPlaying = playing.isPlaying();
-			if(isPlaying)
-				cc.pause(new MyNotifiable());
-
-
-			//Then connect to the other //See HomeContoller @160
-			Log.i(TAG, "Switching host to " + (host == null ? "<null>" : host.addr) + ".");
-			HostFactory.saveHost(this.getApplicationContext(), host);
-			Toast.makeText(this.getApplicationContext(), "Changed host to " + host.toString() + ".", Toast.LENGTH_SHORT).show();
-			ClientFactory.resetClient(host);
-
-
-			//launch playURL ? playFile ?
-			cc.playFile(new MyNotifiable(), f, 1);
-			cc.seek(new MyNotifiable(), SeekType.absolute, p);
-		} else if(state==7)  {
-			genNotification(pref);
+		if((state & HOST_STATE_DIFF) != 0){ //Another host is tagged
+			if((state & HOST_STATE_NOTPLAYING) == 0){  //There is something playing on the connected host
+				if((state & HOST_STATE_OTHER_NOTPLAYING) != 0){ //There is nothing playing on the tagged hot
+					if((state & NOBODY_ON_KINECT) !=0){ //There is nobody on connected host kinect
+						//case22-23
+						switchPlaying(host,true,10);
+			
+					}
+					else { //There is someone on kinect
+						//case20-21
+						switchPlaying(host,false,10);
+					}
+				}
+			}
+			else{ //There is nothing playing on the connected host
+				{
+					if((state & NOTHING_ON_REMOTE)== 0) //There is something on the remote
+					{
+						applySavedFile(pref, host);
+					}
+				}
+			}
+		} else { //This host is tagged
+			if((state & HOST_STATE_NOTPLAYING) == 0){ //There is something playing on the connected host
+				if((state & NOTHING_ON_REMOTE) != 0) { //Nothing on the remote
+					//case7
+					saveFile(pref);
+				} else { //Something on the remote
+					//case6
+					askForSaveFile(pref);
+					return;
+				}
+			} else{ //There is nothing playing
+				if((state & NOTHING_ON_REMOTE) == 0) { //Something on the remote
+					//case14
+					applySavedFile(pref,host);
+				}
+			}
 		}
-
 		finish();
 
+	}
+
+	private boolean checkKinect(){
+		Socket s = new Socket();
+		try {
+			s.connect(new InetSocketAddress(HostFactory.host.addr, 8420),500);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		BufferedReader i = null;
+		try {
+			i = new BufferedReader(new InputStreamReader(s.getInputStream()));
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		String res = "";
+		try {
+			res = i.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		if("0".equals(res)){
+			return false;
+		}
+		else if(("1").equals(res)){
+			return true;
+		}
+		return false;
+	}
+	
+	private void switchPlaying(Host host,boolean pause,int secondsBack){
+		//Stop this from playing //See jsonrpc-ControlClient @120
+		String f =  playing.getFilename();
+		double p;
+		if(playing.getTime()<secondsBack)
+			p = 0;
+		else
+			p = (playing.getTime()-secondsBack)  * 100 / (float)playing.getDuration();
+	
+		/*boolean isPlaying = playing.isPlaying();
+		if(isPlaying && pause)
+			cc.pause(new MyNotifiable());*/
+		if(pause)
+			cc.stop(new MyNotifiable());
+
+
+		//Then connect to the other //See HomeContoller @160
+		Log.i(TAG, "Switching host to " + (host == null ? "<null>" : host.addr) + ".");
+		HostFactory.saveHost(this.getApplicationContext(), host);
+		Toast.makeText(this.getApplicationContext(), "Changed host to " + host.toString() + ".", Toast.LENGTH_SHORT).show();
+		ClientFactory.resetClient(host);
+
+
+		//launch playURL ? playFile ?
+		cc.playFile(new MyNotifiable(), f, 1);
+		cc.seek(new MyNotifiable(), SeekType.absolute, p);
+	}
+
+	
+	public void askForSaveFile(final SharedPreferences pref){
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		//builder.setMessage(getString(R.string.Do_you_want_to_add_this_host))
+		builder.setMessage("Do you want to save this file ?")
+		.setTitle(getString(R.string.tag_nfc));
+		builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				saveFile(pref);
+				finish();
+			}
+		});
+		builder.setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				finish();
+			}	
+		});
+		AlertDialog dialog = builder.create();
+		dialog.show();
 	}
 
 	private boolean checkIfHostExist(Host host){
@@ -241,7 +380,15 @@ public class NFCIntentActivity extends Activity {
 		return false;
 	}
 
-	public static class MyNotifiable implements INotifiableManager{
+	public static void cleanSavedFile(Context c){
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(c);
+		SharedPreferences.Editor editor = pref.edit();
+		editor.remove(c.getString(R.string.prefId_save_playing_file_name));
+		editor.remove(c.getString(R.string.prefId_save_playing_seek));
+		editor.commit();
+	}
+	
+ 	public static class MyNotifiable implements INotifiableManager{
 
 		public void onFinish(DataResponse<?> response) {
 			// TODO Auto-generated method stub

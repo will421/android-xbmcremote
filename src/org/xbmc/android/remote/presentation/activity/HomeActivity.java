@@ -123,6 +123,8 @@ public class HomeActivity extends Activity {
         filter.addAction(Intent.ACTION_SCREEN_ON);
 
         registerReceiver(new AndroidBroadcastReceiver(), filter);
+        
+        NFCIntentActivity.cleanSavedFile(this);
 	}
 	
 
